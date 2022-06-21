@@ -32,21 +32,37 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "shaderprogram.h"
 #include "myCube.h"
 #include "myTeapot.h"
+#include "blockade.h"
+#include "ground.h" // import
+#include "rock.h"
 
 float speed_x=0;
 float speed_y=0;
 float aspectRatio=1;
 
+bool isWPressed = false;
+bool isSPressed = false;
+bool isAPressed = false;
+bool isDPressed = false;
+bool isEPressed = false;
+bool isQPressed = false;
+float cameraX = 0;
+float cameraZ = -50;
+float cameraAngleY = 0;		
+int cameraSpeed = 10;
+int cameraAngleSpeed = 2;
+
 ShaderProgram *sp;
 
 
 //Odkomentuj, żeby rysować kostkę
+/*
 float* vertices = myCubeVertices;
 float* normals = myCubeNormals;
 float* texCoords = myCubeTexCoords;
 float* colors = myCubeColors;
 int vertexCount = myCubeVertexCount;
-
+*/
 
 //Odkomentuj, żeby rysować czajnik
 //float* vertices = myTeapotVertices;
@@ -57,6 +73,43 @@ int vertexCount = myCubeVertexCount;
 
 
 
+
+
+//Odkomentuj, żeby rysować kostkę
+
+/*
+float* vertices = blokadaVertices;
+float* normals = blokadaVertexNormals;
+float* texCoords = blokadaTexCoords;
+float* colors = myCubeColors;
+int vertexCount = blokadaVertexCount;
+s
+int* indexes = blokadaIndexes;
+unsigned int indexCount = blokadaindexCount;
+*/
+
+
+float* vertices = groundVertices;
+float* normals = groundVertexNormals;
+float* texCoords = groundTexCoords;
+int vertexCount = groundVertexCount;
+int* indexes = groundIndexes;
+unsigned int indexCount = groundindexCount;
+float* colors = groundColors;
+
+
+
+/*
+float* vertices = rockVertices;
+float* normals = rockVertexNormals;
+float* texCoords = rockTexCoords;
+int vertexCount = rockVertexCount;
+int* indexes = rockIndexes;
+unsigned int indexCount = rockindexCount;
+float* colors = groundColors;
+
+
+*/
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
 	fputs(description, stderr);
@@ -69,13 +122,36 @@ void keyCallback(GLFWwindow* window,int key,int scancode,int action,int mods) {
         if (key==GLFW_KEY_RIGHT) speed_x=PI/2;
         if (key==GLFW_KEY_UP) speed_y=PI/2;
         if (key==GLFW_KEY_DOWN) speed_y=-PI/2;
-    }
+
+		
+		if (key == GLFW_KEY_W) isWPressed = true;
+		if (key == GLFW_KEY_S) isSPressed = true;
+		if (key == GLFW_KEY_A) isAPressed = true;
+		if (key == GLFW_KEY_D) isDPressed = true;
+		if (key == GLFW_KEY_E) isEPressed = true;
+		if (key == GLFW_KEY_Q) isQPressed = true;
+	}
     if (action==GLFW_RELEASE) {
-        if (key==GLFW_KEY_LEFT) speed_x=0;
-        if (key==GLFW_KEY_RIGHT) speed_x=0;
-        if (key==GLFW_KEY_UP) speed_y=0;
-        if (key==GLFW_KEY_DOWN) speed_y=0;
+
+		if (key == GLFW_KEY_LEFT) speed_x = 0;
+		if (key == GLFW_KEY_RIGHT) speed_x = 0;
+		if (key == GLFW_KEY_UP) speed_y = 0;
+		if (key == GLFW_KEY_DOWN) speed_y = 0;
+
+
+        if (key== GLFW_KEY_W) isWPressed =false;
+        if (key==GLFW_KEY_S) isSPressed = false;
+        if (key==GLFW_KEY_A) isAPressed = false;
+        if (key==GLFW_KEY_D) isDPressed = false;
+		if (key == GLFW_KEY_E) isEPressed = false;
+		if (key == GLFW_KEY_Q) isQPressed = false;
     }
+
+
+
+
+
+
 }
 
 void windowResizeCallback(GLFWwindow* window,int width,int height) {
@@ -111,12 +187,14 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	//************Tutaj umieszczaj kod rysujący obraz******************l
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	
+
 	glm::mat4 V=glm::lookAt(
-         glm::vec3(0, 0, -5),
-         glm::vec3(0,0,0),
+         glm::vec3(cameraX, 5, cameraZ),
+         glm::vec3(cameraX+cos(cameraAngleY)*20,0, cameraZ +20*sin(cameraAngleY)),
          glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
 
-    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 50.0f); //Wylicz macierz rzutowania
+    glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 1000.0f); //Wylicz macierz rzutowania
 
     glm::mat4 M=glm::mat4(1.0f);
 	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
@@ -131,9 +209,17 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
     glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
     glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0,vertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
-    glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
 
+
+   // glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indexes);
+
+
+	
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+
 
     glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }
@@ -172,11 +258,39 @@ int main(void)
 	//Główna pętla
 	float angle_x=0; //Aktualny kąt obrotu obiektu
 	float angle_y=0; //Aktualny kąt obrotu obiektu
+
+
 	glfwSetTime(0); //Zeruj timer
 	while (!glfwWindowShouldClose(window)) //Tak długo jak okno nie powinno zostać zamknięte
 	{
         angle_x+=speed_x*glfwGetTime(); //Zwiększ/zmniejsz kąt obrotu na podstawie prędkości i czasu jaki upłynał od poprzedniej klatki
         angle_y+=speed_y*glfwGetTime(); //Zwiększ/zmniejsz kąt obrotu na podstawie prędkości i czasu jaki upłynał od poprzedniej klatki
+
+		if (isWPressed) {
+			
+			cameraZ += cameraSpeed* sin(cameraAngleY) * glfwGetTime();
+			cameraX += cameraSpeed* cos(cameraAngleY) * glfwGetTime();
+		}
+		else if(isSPressed) {
+			cameraZ -= cameraSpeed * sin(cameraAngleY) * glfwGetTime();
+			cameraX -= cameraSpeed * cos(cameraAngleY) * glfwGetTime();
+		}
+
+		if (isAPressed) {
+			cameraZ -= cameraSpeed * sin(cameraAngleY + PI/2) * glfwGetTime();
+			cameraX -= cameraSpeed * cos(cameraAngleY + PI / 2) * glfwGetTime();
+		}
+		else if (isDPressed) {
+			cameraZ += cameraSpeed * sin(cameraAngleY + PI / 2) * glfwGetTime();
+			cameraX += cameraSpeed * cos(cameraAngleY + PI / 2) * glfwGetTime();
+		}
+		if (isEPressed) {
+			cameraAngleY += cameraAngleSpeed * glfwGetTime();
+		}
+		else if (isQPressed) {
+			cameraAngleY -= cameraAngleSpeed * glfwGetTime();
+		}
+
         glfwSetTime(0); //Zeruj timer
 		drawScene(window,angle_x,angle_y); //Wykonaj procedurę rysującą
 		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
