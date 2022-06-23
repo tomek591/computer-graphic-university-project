@@ -35,6 +35,7 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "blockade.h"
 #include "ground.h" // import
 #include "rock.h"
+#include "cube.h"
 
 float speed_x=0;
 float speed_y=0;
@@ -53,7 +54,8 @@ int cameraSpeed = 10;
 int cameraAngleSpeed = 2;
 
 ShaderProgram *sp;
-
+GLuint groundTex; //Uchwyt
+GLuint rockTex; //Uchwyt
 
 //Odkomentuj, żeby rysować kostkę
 /*
@@ -88,14 +90,15 @@ int* indexes = blokadaIndexes;
 unsigned int indexCount = blokadaindexCount;
 */
 
-
+/*
 float* vertices = groundVertices;
 float* normals = groundVertexNormals;
 float* texCoords = groundTexCoords;
 int vertexCount = groundVertexCount;
 int* indexes = groundIndexes;
-unsigned int indexCount = groundindexCount;
-float* colors = groundColors;
+unsigned int indexCount = groundIndexCount;float* colors = groundColors;
+*/
+
 
 
 
@@ -105,7 +108,7 @@ float* normals = rockVertexNormals;
 float* texCoords = rockTexCoords;
 int vertexCount = rockVertexCount;
 int* indexes = rockIndexes;
-unsigned int indexCount = rockindexCount;
+unsigned int indexCount = rockIndexCount;
 float* colors = groundColors;
 
 
@@ -153,6 +156,29 @@ void keyCallback(GLFWwindow* window,int key,int scancode,int action,int mods) {
 
 
 }
+GLuint readTexture(const char* filename) {
+	GLuint tex;
+	glActiveTexture(GL_TEXTURE0);
+
+	//Wczytanie do pamięci komputera
+	std::vector<unsigned char> image;   //Alokuj wektor do wczytania obrazka
+	unsigned width, height;   //Zmienne do których wczytamy wymiary obrazka
+	//Wczytaj obrazek
+	unsigned error = lodepng::decode(image, width, height, filename);
+
+	//Import do pamięci karty graficznej
+	glGenTextures(1, &tex); //Zainicjuj jeden uchwyt
+	glBindTexture(GL_TEXTURE_2D, tex); //Uaktywnij uchwyt
+	//Wczytaj obrazek do pamięci KG skojarzonej z uchwytem
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, (unsigned char*)image.data());
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	return tex;
+}
+
 
 void windowResizeCallback(GLFWwindow* window,int width,int height) {
     if (height==0) return;
@@ -167,6 +193,10 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glEnable(GL_DEPTH_TEST);
 	glfwSetWindowSizeCallback(window,windowResizeCallback);
 	glfwSetKeyCallback(window,keyCallback);
+	//Wczytanie i import obrazka – w initOpenGLProgram
+	
+	groundTex = readTexture("szachownica.png");
+	rockTex = readTexture("rockDIFFUSE.png");
 
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
@@ -175,11 +205,11 @@ void initOpenGLProgram(GLFWwindow* window) {
 //Zwolnienie zasobów zajętych przez program
 void freeOpenGLProgram(GLFWwindow* window) {
     //************Tutaj umieszczaj kod, który należy wykonać po zakończeniu pętli głównej************
-
+	//Usunięcie tekstury z pamięci karty graficznej – w freeOpenGLProgram
+	glDeleteTextures(1, &groundTex);
+	glDeleteTextures(1, &rockTex);
     delete sp;
 }
-
-
 
 
 //Procedura rysująca zawartość sceny
@@ -190,35 +220,78 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	
 
 	glm::mat4 V=glm::lookAt(
-         glm::vec3(cameraX, 5, cameraZ),
-         glm::vec3(cameraX+cos(cameraAngleY)*20,0, cameraZ +20*sin(cameraAngleY)),
-         glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
+     glm::vec3(cameraX, 5, cameraZ),
+     glm::vec3(cameraX+cos(cameraAngleY)*20,0, cameraZ +20*sin(cameraAngleY)),
+	glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
+	//	glm::vec3(cameraX,  -100.0f, cameraZ),
+	//	glm::vec3(0.0f, 0.0f, 0.0f),
+    //     glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
 
     glm::mat4 P=glm::perspective(50.0f*PI/180.0f, aspectRatio, 0.01f, 1000.0f); //Wylicz macierz rzutowania
 
-    glm::mat4 M=glm::mat4(1.0f);
-	M=glm::rotate(M,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
-	M=glm::rotate(M,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
+
+    glm::mat4 Mground=glm::mat4(1.0f);
+	Mground =glm::rotate(Mground,angle_y,glm::vec3(1.0f,0.0f,0.0f)); //Wylicz macierz modelu
+	Mground =glm::rotate(Mground,angle_x,glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz modelu
 
     sp->use();//Aktywacja programu cieniującego
     //Przeslij parametry programu cieniującego do karty graficznej
     glUniformMatrix4fv(sp->u("P"),1,false,glm::value_ptr(P));
     glUniformMatrix4fv(sp->u("V"),1,false,glm::value_ptr(V));
-    glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(M));
+    glUniformMatrix4fv(sp->u("M"),1,false,glm::value_ptr(Mground));
 
     glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0,vertices); //Wskaż tablicę z danymi dla atrybutu vertex
+    glVertexAttribPointer(sp->a("vertex"),4,GL_FLOAT,false,0, groundVertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
-	glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, groundTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, groundTex);
+	glUniform1i(sp->u("tex"), 0);
 
 
    // glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
-	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, indexes);
+	glDrawArrays(GL_TRIANGLES,0,groundVertexCount);
 
-
-	
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));
+
+	//kamień ====================================================================================
+	glm::mat4 Mrock = glm::mat4(1.0f);
+	Mrock = glm::rotate(Mrock, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	Mrock = glm::rotate(Mrock, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+	Mrock = glm::scale(Mrock, glm::vec3(0.1f, 0.1f, 0.1f)); //Wylicz macierz modelu
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mrock));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, rockVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, rockTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, rockTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	//glDrawElements(GL_TRIANGLES, cubeIndexCount, GL_UNSIGNED_INT, rockIndexes);
+	 glDrawArrays(GL_TRIANGLES,0, rockVertexCount); //Narysuj obiekt
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));
 
 
     glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni

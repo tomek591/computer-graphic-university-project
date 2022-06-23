@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="blockade.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="cube.h" />
     <ClInclude Include="ground.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="myCube.h" />

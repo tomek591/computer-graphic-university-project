@@ -6,11 +6,12 @@ uniform mat4 V;
 uniform mat4 M;
 
 //Atrybuty
-in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
-in vec4 color; 
-out vec4 iColor; 
+layout (location=0) in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
+layout (location=2) in vec2 texCoord; 
+
+out vec2 i_tc;
 
 void main(void) {
     gl_Position=P*V*M*vertex;
-    iColor= color;
+    i_tc=vec2(texCoord[0],1-texCoord[1]);
 }
