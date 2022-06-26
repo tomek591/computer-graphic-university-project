@@ -40,7 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="f_simplest.glsl" />
+    <None Include="f_track.glsl" />
     <None Include="v_simplest.glsl" />
+    <None Include="v_track.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
