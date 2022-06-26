@@ -82,5 +82,11 @@
     <None Include="v_simplest.glsl">
       <Filter>Pliki zasobów</Filter>
     </None>
+    <None Include="f_track.glsl">
+      <Filter>Pliki zasobów</Filter>
+    </None>
+    <None Include="v_track.glsl">
+      <Filter>Pliki zasobów</Filter>
+    </None>
   </ItemGroup>
 </Project>

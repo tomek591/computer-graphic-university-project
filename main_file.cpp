@@ -53,13 +53,20 @@ bool isAPressed = false;
 bool isDPressed = false;
 bool isEPressed = false;
 bool isQPressed = false;
-float cameraX = 0;
-float cameraZ = -50;
-float cameraAngleY = 0;		
-int cameraSpeed = 10;
-int cameraAngleSpeed = 2;
+float tankX = 0;
+float tankZ = 0;;
+float tankAngleY = 0;
+int tankSpeed = 10;
+int tankAngleSpeed = 2;
+float cannonAngleY = 0;
+int cannonAngleSpeed = 2;
+float leftTrackOffset = 0;
+float rightTrackOffset = 0;
+float trackOffsetSpeed = 2;
+
 
 ShaderProgram *sp;
+ShaderProgram *tracksp;
 GLuint groundTex; //Uchwyt
 GLuint rockTex; //Uchwyt
 GLuint trackTex; //Uchwyt
@@ -216,6 +223,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 	myCubeRightTex = readTexture("negz.png");
 	myCubeLeftTex = readTexture("posz.png");
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
+	tracksp = new ShaderProgram("v_track.glsl", NULL, "f_track.glsl");
 }
 
 
@@ -228,6 +236,7 @@ void freeOpenGLProgram(GLFWwindow* window) {
 	glDeleteTextures(1, &trackTex);
 	glDeleteTextures(1, &tankTex);
     delete sp;
+	delete tracksp;
 }
 
 
@@ -236,12 +245,10 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	//************Tutaj umieszczaj kod rysujący obraz******************l
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
-
-	glm::mat4 V=glm::lookAt(
-     glm::vec3(cameraX, 5, cameraZ),
-     glm::vec3(cameraX+cos(cameraAngleY)*20,0, cameraZ +20*sin(cameraAngleY)),
-	glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
+	glm::mat4 V = glm::lookAt(
+		glm::vec3(tankX - cos(cannonAngleY +tankAngleY) * 20, 15, tankZ - 20* sin(cannonAngleY + tankAngleY) ),//z 
+		glm::vec3(tankX + cos(cannonAngleY + tankAngleY) * 20, 0, tankZ + 20 * sin(cannonAngleY + tankAngleY)),//na
+		glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
 	//	glm::vec3(cameraX,  -100.0f, cameraZ),
 	//	glm::vec3(0.0f, 0.0f, 0.0f),
     //     glm::vec3(0.0f,1.0f,0.0f)); //Wylicz macierz widoku
@@ -279,71 +286,78 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("texCoord"));
 
+	//allTank =========================================================================================
+	glm::mat4 MallTank= glm::mat4(1.0f);
+	MallTank = glm::translate(MallTank, glm::vec3(tankX, 0.0f, tankZ)); //Wylicz macierz modelu
+	MallTank = glm::rotate(MallTank, -PI/2 -tankAngleY, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
 	//leftTrack=========================================================================================
 
-	glm::mat4 MtrackL = glm::mat4(1.0f);
+	glm::mat4 MtrackL = MallTank;
+
 	MtrackL = glm::rotate(MtrackL, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 	MtrackL = glm::rotate(MtrackL, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
 
-	sp->use();//Aktywacja programu cieniującego
+	tracksp->use();//Aktywacja programu cieniującego
 	//Przeslij parametry programu cieniującego do karty graficznej
-	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
-	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(MtrackL));
+	glUniformMatrix4fv(tracksp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(tracksp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(tracksp->u("M"), 1, false, glm::value_ptr(MtrackL));
 
-	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, leftTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+	glEnableVertexAttribArray(tracksp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(tracksp->a("vertex"), 4, GL_FLOAT, false, 0, leftTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
 	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
 
-	glEnableVertexAttribArray(sp->a("texCoord"));
-	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, leftTrackTexCoords);
+	glEnableVertexAttribArray(tracksp->a("texCoord"));
+	glVertexAttribPointer(tracksp->a("texCoord"), 2, GL_FLOAT, false, 0, leftTrackTexCoords);
 
 
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, trackTex);
-	glUniform1i(sp->u("tex"), 0);
+	glUniform1i(tracksp->u("tex"), 0);
+	glUniform1f(tracksp->u("offset"), leftTrackOffset);
 
 
 	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
 	glDrawArrays(GL_TRIANGLES, 0, leftTrackVertexCount);
 
-	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
-	glDisableVertexAttribArray(sp->a("texCoord"));
+	glDisableVertexAttribArray(tracksp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(tracksp->a("texCoord"));
 	//rightTrack=========================================================================================
 
-	glm::mat4 MtrackR = glm::mat4(1.0f);
+	glm::mat4 MtrackR = MallTank;
 	MtrackR = glm::rotate(MtrackR, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 	MtrackR = glm::rotate(MtrackR, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
 
-	sp->use();//Aktywacja programu cieniującego
+	tracksp->use();//Aktywacja programu cieniującego
 	//Przeslij parametry programu cieniującego do karty graficznej
-	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
-	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(MtrackR));
+	glUniformMatrix4fv(tracksp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(tracksp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(tracksp->u("M"), 1, false, glm::value_ptr(MtrackR));
 
-	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
-	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, rightTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+	glEnableVertexAttribArray(tracksp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(tracksp->a("vertex"), 4, GL_FLOAT, false, 0, rightTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
 
 	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
 	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
 
-	glEnableVertexAttribArray(sp->a("texCoord"));
-	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, rightTrackTexCoords);
+	glEnableVertexAttribArray(tracksp->a("texCoord"));
+	glVertexAttribPointer(tracksp->a("texCoord"), 2, GL_FLOAT, false, 0, rightTrackTexCoords);
 
 
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, trackTex);
-	glUniform1i(sp->u("tex"), 0);
-
+	glUniform1i(tracksp->u("tex"), 0);
+	glUniform1f(tracksp->u("offset"), rightTrackOffset);
 
 	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
 	glDrawArrays(GL_TRIANGLES, 0, rightTrackVertexCount);
 
-	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
-	glDisableVertexAttribArray(sp->a("texCoord"));
+	glDisableVertexAttribArray(tracksp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(tracksp->a("texCoord"));
 	//tank=========================================================================================
 
-	glm::mat4 Mtank = glm::mat4(1.0f);
+	glm::mat4 Mtank = MallTank;
 	Mtank = glm::rotate(Mtank, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 	Mtank = glm::rotate(Mtank, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
 
@@ -371,9 +385,12 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glDrawArrays(GL_TRIANGLES, 0, tankVertexCount);
 
 	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
-	glDisableVertexAttribArray(sp->a("texCoord"));//rightTrack=========================================================================================
+	glDisableVertexAttribArray(sp->a("texCoord"));
+	//cannon=========================================================================================
 
-	glm::mat4 Mcannon = glm::mat4(1.0f);
+	glm::mat4 Mcannon = MallTank;
+	Mcannon = glm::rotate(Mcannon, -cannonAngleY, glm::vec3(0.0f, 1.0f, 0.0f));
+	
 	Mcannon = glm::rotate(Mcannon, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 	Mcannon = glm::rotate(Mcannon, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
 
@@ -674,27 +691,37 @@ int main(void)
 
 		if (isWPressed) {
 			
-			cameraZ += cameraSpeed* sin(cameraAngleY) * glfwGetTime();
-			cameraX += cameraSpeed* cos(cameraAngleY) * glfwGetTime();
+			tankZ += tankSpeed* sin(tankAngleY) * glfwGetTime();
+			tankX += tankSpeed* cos(tankAngleY) * glfwGetTime();
+			leftTrackOffset += trackOffsetSpeed * glfwGetTime();
+			rightTrackOffset += trackOffsetSpeed * glfwGetTime();
 		}
+
 		else if(isSPressed) {
-			cameraZ -= cameraSpeed * sin(cameraAngleY) * glfwGetTime();
-			cameraX -= cameraSpeed * cos(cameraAngleY) * glfwGetTime();
+			tankZ -= tankSpeed * sin(tankAngleY) * glfwGetTime();
+			tankX -= tankSpeed * cos(tankAngleY) * glfwGetTime();
+			leftTrackOffset -= trackOffsetSpeed * glfwGetTime();
+			rightTrackOffset -= trackOffsetSpeed * glfwGetTime();
+
 		}
 
 		if (isAPressed) {
-			cameraZ -= cameraSpeed * sin(cameraAngleY + PI/2) * glfwGetTime();
-			cameraX -= cameraSpeed * cos(cameraAngleY + PI / 2) * glfwGetTime();
+			tankAngleY -= tankAngleSpeed * glfwGetTime();
+			leftTrackOffset -= trackOffsetSpeed * glfwGetTime();
+			rightTrackOffset += trackOffsetSpeed * glfwGetTime();
+
 		}
 		else if (isDPressed) {
-			cameraZ += cameraSpeed * sin(cameraAngleY + PI / 2) * glfwGetTime();
-			cameraX += cameraSpeed * cos(cameraAngleY + PI / 2) * glfwGetTime();
+			tankAngleY += tankAngleSpeed * glfwGetTime();
+			leftTrackOffset += trackOffsetSpeed * glfwGetTime();
+			rightTrackOffset -= trackOffsetSpeed * glfwGetTime();
+
 		}
 		if (isEPressed) {
-			cameraAngleY += cameraAngleSpeed * glfwGetTime();
+			cannonAngleY += cannonAngleSpeed * glfwGetTime();
 		}
 		else if (isQPressed) {
-			cameraAngleY -= cameraAngleSpeed * glfwGetTime();
+			cannonAngleY -= cannonAngleSpeed * glfwGetTime();
 		}
 
         glfwSetTime(0); //Zeruj timer
