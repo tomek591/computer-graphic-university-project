@@ -30,7 +30,10 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "constants.h"
 #include "lodepng.h"
 #include "shaderprogram.h"
-#include "myCube.h"
+#include "myCubeFront.h"
+#include "myCubeBack.h"
+#include "myCubeRight.h"
+#include "myCubeLeft.h"
 #include "myTeapot.h"
 #include "blockade.h"
 #include "ground.h" // import
@@ -61,7 +64,10 @@ GLuint groundTex; //Uchwyt
 GLuint rockTex; //Uchwyt
 GLuint trackTex; //Uchwyt
 GLuint tankTex; //Uchwyt
-
+GLuint myCubeFrontTex; //ściana przednia
+GLuint myCubeBackTex; //ściana tylnia
+GLuint myCubeRightTex; //ściana tylnia
+GLuint myCubeLeftTex; //ściana tylnia
 //Odkomentuj, żeby rysować kostkę
 /*
 float* vertices = myCubeVertices;
@@ -205,7 +211,10 @@ void initOpenGLProgram(GLFWwindow* window) {
 	rockTex = readTexture("rockDIFFUSE.png");
 	trackTex = readTexture("tracks.png");
 	tankTex = readTexture("tank.png");
-
+	myCubeFrontTex = readTexture("posx.png");
+	myCubeBackTex = readTexture("negx.png");
+	myCubeRightTex = readTexture("negz.png");
+	myCubeLeftTex = readTexture("posz.png");
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
 
@@ -469,8 +478,156 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	 glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("texCoord"));
 
+	//Front=================================================================================================
 
-    glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
+	glm::mat4 McubeFront = glm::mat4(1.0f);
+	McubeFront = glm::translate(McubeFront, glm::vec3(0.0f, 0.0f, -100.0f)); //Wylicz macierz modelu
+	McubeFront = glm::scale(McubeFront, glm::vec3(100.0f, 100.0f, 100.0f));//Wylicz macierz modelu
+	McubeFront = glm::rotate(McubeFront, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+	McubeFront = glm::translate(McubeFront, glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
+
+	//McubeFront = glm::rotate(McubeFront, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+	
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(McubeFront));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, myCubeFrontVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCubeFrontColors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, myCubeFrontTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, myCubeFrontTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myCubeFrontVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("tex"));
+	//back=============================================================================================================
+	glm::mat4 McubeBack = glm::mat4(1.0f);
+	McubeBack = glm::translate(McubeBack, glm::vec3(0.0f, 0.0f, 100.0f)); //Wylicz macierz modelu
+	McubeBack = glm::scale(McubeBack, glm::vec3(100.0f, 100.0f, 100.0f));//Wylicz macierz modelu
+	McubeBack = glm::rotate(McubeBack, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+	McubeBack = glm::translate(McubeBack, glm::vec3(0.0f, 0.0f, -1.0f)); //Wylicz macierz modelu
+
+	//McubeFront = glm::rotate(McubeFront, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(McubeBack));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, myCubeBackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCubeFrontColors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, myCubeBackTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, myCubeBackTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myCubeBackVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("tex"));
+
+	//Right=============================================================================================================
+
+	glm::mat4 McubeRight = glm::mat4(1.0f);
+	McubeRight = glm::translate(McubeRight, glm::vec3(100.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	McubeRight = glm::scale(McubeRight, glm::vec3(100.0f, 100.0f, 100.0f));//Wylicz macierz modelu
+	McubeRight = glm::rotate(McubeRight, PI, glm::vec3(0.0f, 1.0f, 0.0f));
+	McubeRight = glm::rotate(McubeRight, PI/2, glm::vec3(0.0f, 0.0f, 1.0f));
+	McubeRight = glm::rotate(McubeRight, PI / 2, glm::vec3(0.0f, -1.0f, 0.0f));
+	McubeRight = glm::translate(McubeRight, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	//McubeFront = glm::rotate(McubeFront, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(McubeRight));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, myCubeRightVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCubeFrontColors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, myCubeRightTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, myCubeRightTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myCubeRightVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("tex"));
+
+	//Left=============================================================================================================
+
+	glm::mat4 McubeLeft = glm::mat4(1.0f);
+	McubeLeft = glm::translate(McubeLeft, glm::vec3(-100.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	McubeLeft = glm::scale(McubeLeft, glm::vec3(100.0f, -100.0f, 100.0f));//Wylicz macierz modelu
+	McubeLeft = glm::rotate(McubeLeft, PI, glm::vec3(0.0f, -1.0f, 0.0f));
+	McubeLeft = glm::rotate(McubeLeft, PI / 2, glm::vec3(0.0f, 0.0f, -1.0f));
+	McubeLeft = glm::rotate(McubeLeft, PI / 2, glm::vec3(0.0f, 1.0f, 0.0f));
+	McubeLeft = glm::translate(McubeLeft, glm::vec3(0.0f, -1.0f, 0.0f)); //Wylicz macierz modelu
+
+	//McubeFront = glm::rotate(McubeFront, PI, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(McubeLeft));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, myCubeLeftVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, myCubeFrontColors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, myCubeLeftTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, myCubeLeftTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, myCubeLeftVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("tex"));
+	glfwSwapBuffers(window); //Przerzuć tylny bufor na przedni
 }
 
 

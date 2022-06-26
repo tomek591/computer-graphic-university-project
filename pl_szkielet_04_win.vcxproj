@@ -26,7 +26,10 @@
     <ClInclude Include="ground.h" />
     <ClInclude Include="leftTrack.h" />
     <ClInclude Include="lodepng.h" />
-    <ClInclude Include="myCube.h" />
+    <ClInclude Include="myCubeBack.h" />
+    <ClInclude Include="myCubeFront.h" />
+    <ClInclude Include="MyCubeLeft.h" />
+    <ClInclude Include="MyCubeRight.h" />
     <ClInclude Include="myTeapot.h" />
     <ClInclude Include="rightTrack.h" />
     <ClInclude Include="rock.h" />
