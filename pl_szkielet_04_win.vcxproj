@@ -20,14 +20,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blockade.h" />
+    <ClInclude Include="cannon.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="cube.h" />
     <ClInclude Include="ground.h" />
+    <ClInclude Include="leftTrack.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="myCube.h" />
     <ClInclude Include="myTeapot.h" />
+    <ClInclude Include="rightTrack.h" />
     <ClInclude Include="rock.h" />
     <ClInclude Include="shaderprogram.h" />
+    <ClInclude Include="tank.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lodepng.cpp" />

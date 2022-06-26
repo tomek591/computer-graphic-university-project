@@ -35,6 +35,10 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "blockade.h"
 #include "ground.h" // import
 #include "rock.h"
+#include "leftTrack.h"
+#include "rightTrack.h"
+#include "cannon.h"
+#include "tank.h"
 
 float speed_x=0;
 float speed_y=0;
@@ -55,6 +59,8 @@ int cameraAngleSpeed = 2;
 ShaderProgram *sp;
 GLuint groundTex; //Uchwyt
 GLuint rockTex; //Uchwyt
+GLuint trackTex; //Uchwyt
+GLuint tankTex; //Uchwyt
 
 //Odkomentuj, żeby rysować kostkę
 /*
@@ -197,6 +203,8 @@ void initOpenGLProgram(GLFWwindow* window) {
 	
 	groundTex = readTexture("grasslight-big.png");
 	rockTex = readTexture("rockDIFFUSE.png");
+	trackTex = readTexture("tracks.png");
+	tankTex = readTexture("tank.png");
 
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
 }
@@ -208,6 +216,8 @@ void freeOpenGLProgram(GLFWwindow* window) {
 	//Usunięcie tekstury z pamięci karty graficznej – w freeOpenGLProgram
 	glDeleteTextures(1, &groundTex);
 	glDeleteTextures(1, &rockTex);
+	glDeleteTextures(1, &trackTex);
+	glDeleteTextures(1, &tankTex);
     delete sp;
 }
 
@@ -260,6 +270,129 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
     glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("texCoord"));
 
+	//leftTrack=========================================================================================
+
+	glm::mat4 MtrackL = glm::mat4(1.0f);
+	MtrackL = glm::rotate(MtrackL, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	MtrackL = glm::rotate(MtrackL, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(MtrackL));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, leftTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, leftTrackTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, trackTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, leftTrackVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));
+	//rightTrack=========================================================================================
+
+	glm::mat4 MtrackR = glm::mat4(1.0f);
+	MtrackR = glm::rotate(MtrackR, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	MtrackR = glm::rotate(MtrackR, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(MtrackR));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, rightTrackVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, rightTrackTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, trackTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, rightTrackVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));
+	//tank=========================================================================================
+
+	glm::mat4 Mtank = glm::mat4(1.0f);
+	Mtank = glm::rotate(Mtank, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	Mtank = glm::rotate(Mtank, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mtank));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, tankVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, tankTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, tankTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, tankVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));//rightTrack=========================================================================================
+
+	glm::mat4 Mcannon = glm::mat4(1.0f);
+	Mcannon = glm::rotate(Mcannon, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
+	Mcannon = glm::rotate(Mcannon, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	sp->use();//Aktywacja programu cieniującego
+	//Przeslij parametry programu cieniującego do karty graficznej
+	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mcannon));
+
+	glEnableVertexAttribArray(sp->a("vertex"));  //Włącz przesyłanie danych do atrybutu vertex
+	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, cannonVertices); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	//glEnableVertexAttribArray(sp->a("color"));  //Włącz przesyłanie danych do atrybutu vertex
+	//glVertexAttribPointer(sp->a("color"), 4, GL_FLOAT, false, 0, colors); //Wskaż tablicę z danymi dla atrybutu vertex
+
+	glEnableVertexAttribArray(sp->a("texCoord"));
+	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, cannonTexCoords);
+
+
+	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, tankTex);
+	glUniform1i(sp->u("tex"), 0);
+
+
+	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES, 0, cannonVertexCount);
+
+	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	glDisableVertexAttribArray(sp->a("texCoord"));
 	//kamień ====================================================================================
 	glm::mat4 Mrock = glm::mat4(1.0f);
 	Mrock = glm::rotate(Mrock, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
