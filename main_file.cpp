@@ -35,7 +35,6 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "blockade.h"
 #include "ground.h" // import
 #include "rock.h"
-#include "cube.h"
 
 float speed_x=0;
 float speed_y=0;
@@ -195,7 +194,7 @@ void initOpenGLProgram(GLFWwindow* window) {
 	glfwSetKeyCallback(window,keyCallback);
 	//Wczytanie i import obrazka – w initOpenGLProgram
 	
-	groundTex = readTexture("szachownica.png");
+	groundTex = readTexture("grasslight-big.png");
 	rockTex = readTexture("rockDIFFUSE.png");
 
 	sp=new ShaderProgram("v_simplest.glsl",NULL,"f_simplest.glsl");
@@ -264,7 +263,7 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 	glm::mat4 Mrock = glm::mat4(1.0f);
 	Mrock = glm::rotate(Mrock, angle_y, glm::vec3(1.0f, 0.0f, 0.0f)); //Wylicz macierz modelu
 	Mrock = glm::rotate(Mrock, angle_x, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
-	Mrock = glm::scale(Mrock, glm::vec3(0.1f, 0.1f, 0.1f)); //Wylicz macierz modelu
+	Mrock = glm::translate(Mrock, glm::vec3(-100, 0, -100));
 
 	sp->use();//Aktywacja programu cieniującego
 	//Przeslij parametry programu cieniującego do karty graficznej
@@ -288,9 +287,52 @@ void drawScene(GLFWwindow* window,float angle_x,float angle_y) {
 
 	// glDrawArrays(GL_TRIANGLES,0,vertexCount); //Narysuj obiekt
 	//glDrawElements(GL_TRIANGLES, cubeIndexCount, GL_UNSIGNED_INT, rockIndexes);
-	 glDrawArrays(GL_TRIANGLES,0, rockVertexCount); //Narysuj obiekt
+	glDrawArrays(GL_TRIANGLES,0, rockVertexCount); //Narysuj obiekt
+	int i;
+	for (i = 1; i <= 13; i++)
+	{
+		Mrock = glm::translate(Mrock, glm::vec3(15.0f, 0.0f, 0.0f));
+		Mrock = glm::rotate(Mrock, i * 5.0f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mrock));
+		glDrawArrays(GL_TRIANGLES, 0, rockVertexCount); //Narysuj obiekt
+		Mrock = glm::rotate(Mrock, i * -5.0f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
 
-	glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
+	}
+	Mrock = glm::mat4(1.0f);
+	Mrock = glm::translate(Mrock, glm::vec3(-100, 0, -100));
+	for (i = 1; i <= 13; i++)
+	{
+		Mrock = glm::translate(Mrock, glm::vec3(0.0f, 0.0f, 15.0f));
+		Mrock = glm::rotate(Mrock, i * 5.0f, glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mrock));
+		glDrawArrays(GL_TRIANGLES, 0, rockVertexCount); //Narysuj obiekt
+		Mrock = glm::rotate(Mrock, i * -5.0f, glm::vec3(0.0f, 0.0f, 1.0f)); //Wylicz macierz modelu
+
+	}
+	Mrock = glm::mat4(1.0f);
+	Mrock = glm::translate(Mrock, glm::vec3(100, 0, 100));
+	for (i = 1; i <= 12; i++)
+	{
+		Mrock = glm::translate(Mrock, glm::vec3(-15.0f, 0.0f, 0.0f));
+		Mrock = glm::rotate(Mrock, i * 0.5f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mrock));
+		glDrawArrays(GL_TRIANGLES, 0, rockVertexCount); //Narysuj obiekt
+		Mrock = glm::rotate(Mrock, i * -0.5f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	}
+	Mrock = glm::mat4(1.0f);
+	Mrock = glm::translate(Mrock, glm::vec3(100, 0, 100));
+	for (i = 1; i <= 12; i++)
+	{
+		Mrock = glm::translate(Mrock, glm::vec3(0.0f, 0.0f, -15.0f));
+		Mrock = glm::rotate(Mrock, i * 0.5f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+		glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(Mrock));
+		glDrawArrays(GL_TRIANGLES, 0, rockVertexCount); //Narysuj obiekt
+		Mrock = glm::rotate(Mrock, i * -0.5f, glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz modelu
+
+	}
+	
+	 glDisableVertexAttribArray(sp->a("vertex"));  //Wyłącz przesyłanie danych do atrybutu vertex
 	glDisableVertexAttribArray(sp->a("texCoord"));
 
 
